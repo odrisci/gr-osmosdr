@@ -396,21 +396,6 @@ source_impl::source_impl( const std::string &args )
 
       for (size_t i = 0; i < iface->get_num_channels(); i++) {
         rblock_channel = i;
-#ifdef HAVE_IQBALANCE
-        gr::iqbalance::optimize_c::sptr iq_opt = gr::iqbalance::optimize_c::make( 0 );
-        gr::iqbalance::fix_cc::sptr     iq_fix = gr::iqbalance::fix_cc::make();
-
-        connect(block, i, iq_fix, 0);
-
-        connect(block, i, iq_opt, 0);
-        msg_connect(iq_opt, "iqbal_corr", iq_fix, "iqbal_corr");
-
-        _iq_opt.push_back( iq_opt.get() );
-        _iq_fix.push_back( iq_fix.get() );
-
-        rblock = iq_fix;
-        rblock_channel = 0;
-#endif
         if( input_type != output_type )
         {
             gr::basic_block_sptr conv_block = make_conversion_block( input_type,
@@ -423,6 +408,24 @@ source_impl::source_impl( const std::string &args )
                 rblock_channel = 0;
             }
         }
+#ifdef HAVE_IQBALANCE
+        if( output_type == "fc32" )
+        {
+            gr::iqbalance::optimize_c::sptr iq_opt = gr::iqbalance::optimize_c::make( 0 );
+            gr::iqbalance::fix_cc::sptr     iq_fix = gr::iqbalance::fix_cc::make();
+
+            connect(block, i, iq_fix, 0);
+
+            connect(block, i, iq_opt, 0);
+            msg_connect(iq_opt, "iqbal_corr", iq_fix, "iqbal_corr");
+
+            _iq_opt.push_back( iq_opt.get() );
+            _iq_fix.push_back( iq_fix.get() );
+
+            rblock = iq_fix;
+            rblock_channel = 0;
+        }
+#endif
         connect(rblock, rblock_channel, self(), channel++);
       }
     } else if ( (iface != NULL) || (long(block.get()) != 0) )
