@@ -166,10 +166,11 @@ inline std::string args_to_item_type( const std::string &args )
   std::vector< std::string > arg_list = args_to_vector( args );
   BOOST_FOREACH( std::string arg, arg_list )
   {
-    if( arg.find( "itemtype=" ) == 0 ) // get the itemtype
+    dict_t dict = params_to_dict(arg);
+    if (dict.count("itemtype"))
     {
-        pair_t pair = param_to_pair( arg );
-        item_type = pair.second;
+      item_type = dict["itemtype"];
+      break;
     }
   }
 
