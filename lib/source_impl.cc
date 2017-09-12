@@ -414,9 +414,9 @@ source_impl::source_impl( const std::string &args )
             gr::iqbalance::optimize_c::sptr iq_opt = gr::iqbalance::optimize_c::make( 0 );
             gr::iqbalance::fix_cc::sptr     iq_fix = gr::iqbalance::fix_cc::make();
 
-            connect(block, i, iq_fix, 0);
+            connect(rblock, rblock_channel, iq_fix, 0);
 
-            connect(block, i, iq_opt, 0);
+            connect(rblock, rblock_channel, iq_opt, 0);
             msg_connect(iq_opt, "iqbal_corr", iq_fix, "iqbal_corr");
 
             _iq_opt.push_back( iq_opt.get() );
