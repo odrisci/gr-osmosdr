@@ -94,6 +94,7 @@
 
 
 #include "arg_helpers.h"
+#include "conversion_helpers.h"
 #include "source_impl.h"
 
 /* This avoids throws in ctor of gr::hier_block2, as gnuradio is unable to deal
@@ -121,6 +122,8 @@ source_impl::source_impl( const std::string &args )
 {
   size_t channel = 0;
   bool device_specified = false;
+  std::string output_type = args_to_item_type( args );
+  std::string input_type = "fc32";
 
   std::vector< std::string > arg_list = args_to_vector(args);
 
@@ -334,6 +337,7 @@ source_impl::source_impl( const std::string &args )
     if ( dict.count("hackrf") ) {
       hackrf_source_c_sptr src = make_hackrf_source_c( arg );
       block = src; iface = src.get();
+      input_type = "ic8";
     }
 #endif
 
@@ -341,6 +345,7 @@ source_impl::source_impl( const std::string &args )
     if ( dict.count("bladerf") ) {
       bladerf_source_c_sptr src = make_bladerf_source_c( arg );
       block = src; iface = src.get();
+      input_type = "ic16";
     }
 #endif
 
@@ -386,22 +391,39 @@ source_impl::source_impl( const std::string &args )
     if ( iface != NULL && long(block.get()) != 0 ) {
       _devs.push_back( iface );
 
+      gr::basic_block_sptr rblock = block;
+      size_t rblock_channel = 0;
+
       for (size_t i = 0; i < iface->get_num_channels(); i++) {
+        rblock_channel = i;
 #ifdef HAVE_IQBALANCE
         gr::iqbalance::optimize_c::sptr iq_opt = gr::iqbalance::optimize_c::make( 0 );
         gr::iqbalance::fix_cc::sptr     iq_fix = gr::iqbalance::fix_cc::make();
 
         connect(block, i, iq_fix, 0);
-        connect(iq_fix, 0, self(), channel++);
 
         connect(block, i, iq_opt, 0);
         msg_connect(iq_opt, "iqbal_corr", iq_fix, "iqbal_corr");
 
         _iq_opt.push_back( iq_opt.get() );
         _iq_fix.push_back( iq_fix.get() );
-#else
-        connect(block, i, self(), channel++);
+
+        rblock = iq_fix;
+        rblock_channel = 0;
 #endif
+        if( input_type != output_type )
+        {
+            gr::basic_block_sptr conv_block = make_conversion_block( input_type,
+                    output_type );
+
+            if( conv_block )
+            {
+                connect( rblock, rblock_channel, conv_block, 0 );
+                rblock = conv_block;
+                rblock_channel = 0;
+            }
+        }
+        connect(rblock, rblock_channel, self(), channel++);
       }
     } else if ( (iface != NULL) || (long(block.get()) != 0) )
       throw std::runtime_error("Either iface or block are NULL.");

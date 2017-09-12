@@ -89,8 +89,8 @@ static const int MAX_OUT = 1;	// maximum number of output streams
  */
 hackrf_source_c::hackrf_source_c (const std::string &args)
   : gr::sync_block ("hackrf_source_c",
-        gr::io_signature::make(MIN_IN, MAX_IN, sizeof (gr_complex)),
-        gr::io_signature::make(MIN_OUT, MAX_OUT, sizeof (gr_complex))),
+        gr::io_signature::make(MIN_IN, MAX_IN, 2*sizeof (int8_t)),
+        gr::io_signature::make(MIN_OUT, MAX_OUT, 2*sizeof (int8_t))),
     _dev(NULL),
     _buf(NULL),
     _sample_rate(0),
@@ -363,14 +363,16 @@ int hackrf_source_c::work( int noutput_items,
   unsigned short *buf = _buf[_buf_head] + _buf_offset;
 
   if (noutput_items <= _samp_avail) {
-    for (int i = 0; i < noutput_items; ++i)
-      *out++ = _lut[ *(buf + i) ];
+    //for (int i = 0; i < noutput_items; ++i)
+      //*out++ = _lut[ *(buf + i) ];
+    memcpy( out, buf, noutput_items*2*sizeof(int8_t) );
 
     _buf_offset += noutput_items;
     _samp_avail -= noutput_items;
   } else {
-    for (int i = 0; i < _samp_avail; ++i)
-      *out++ = _lut[ *(buf + i) ];
+    //for (int i = 0; i < _samp_avail; ++i)
+      //*out++ = _lut[ *(buf + i) ];
+    memcpy( out, buf, _samp_avail*2*sizeof(int8_t) );
 
     {
       boost::mutex::scoped_lock lock( _buf_mutex );
@@ -383,8 +385,9 @@ int hackrf_source_c::work( int noutput_items,
 
     int remaining = noutput_items - _samp_avail;
 
-    for (int i = 0; i < remaining; ++i)
-      *out++ = _lut[ *(buf + i) ];
+    //for (int i = 0; i < remaining; ++i)
+      //*out++ = _lut[ *(buf + i) ];
+    memcpy( out, buf, remaining*2*sizeof(int8_t) );
 
     _buf_offset = remaining;
     _samp_avail = (_buf_len / BYTES_PER_SAMPLE) - remaining;

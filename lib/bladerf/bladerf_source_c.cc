@@ -72,8 +72,8 @@ static const int MAX_OUT = 1;	// maximum number of output streams
  */
 bladerf_source_c::bladerf_source_c (const std::string &args)
   : gr::sync_block ("bladerf_source_c",
-                    gr::io_signature::make (MIN_IN, MAX_IN, sizeof (gr_complex)),
-                    gr::io_signature::make (MIN_OUT, MAX_OUT, sizeof (gr_complex)))
+                    gr::io_signature::make (MIN_IN, MAX_IN, 2*sizeof (int16_t)),
+                    gr::io_signature::make (MIN_OUT, MAX_OUT, 2*sizeof (int16_t)))
 {
   int ret;
   std::string device_name;
@@ -142,22 +142,9 @@ int bladerf_source_c::work( int noutput_items,
 {
   int ret;
   const float scaling = 2048.0f;
-  gr_complex *out = static_cast<gr_complex *>(output_items[0]);
+  int16_t *_conv_buf = static_cast<int16_t *>(output_items[0]);
   struct bladerf_metadata meta;
   struct bladerf_metadata *meta_ptr = NULL;
-
-  if (noutput_items > _conv_buf_size) {
-    void *tmp;
-
-    _conv_buf_size = noutput_items;
-    tmp = realloc(_conv_buf, _conv_buf_size * 2 * sizeof(int16_t));
-    if (tmp == NULL) {
-      throw std::runtime_error( std::string(__FUNCTION__) +
-                                "Failed to realloc _conv_buf" );
-    }
-
-    _conv_buf = static_cast<int16_t*>(tmp);
-  }
 
   if (_use_metadata) {
     memset(&meta, 0, sizeof(meta));
@@ -183,9 +170,6 @@ int bladerf_source_c::work( int noutput_items,
   } else {
       _consecutive_failures = 0;
   }
-
-  /* Convert them from fixed to floating point */
-  volk_16i_s32f_convert_32f((float*)out, _conv_buf, scaling, 2*noutput_items);
 
   return noutput_items;
 }

@@ -118,10 +118,75 @@ struct is_nchan_argument
   }
 };
 
+inline size_t item_type_to_size_t( const std::string &item_type )
+{
+    size_t ret = sizeof( gr_complex ); // size of 32fc - default
+
+    if( item_type == "i8" )
+    {
+        ret = sizeof( int8_t );
+    }
+    else if( item_type == "ic8" )
+    {
+        ret = 2*sizeof( int8_t );
+    }
+    else if( item_type == "i16" )
+    {
+        ret = sizeof( int16_t );
+    }
+    else if( item_type == "ic16" )
+    {
+        ret = 2*sizeof( int16_t );
+    }
+    else if( item_type == "i32" )
+    {
+        ret = sizeof( int32_t );
+    }
+    else if( item_type == "ic32" )
+    {
+        ret = 2*sizeof( int32_t );
+    }
+    else if( item_type == "f32" )
+    {
+        ret = sizeof( float );
+    }
+    else if( item_type == "fc32" )
+    {
+        ret = sizeof( gr_complex );
+    }
+
+    return ret;
+
+}
+
+inline std::string args_to_item_type( const std::string &args )
+{
+  std::string item_type ="fc32";
+
+  std::vector< std::string > arg_list = args_to_vector( args );
+  BOOST_FOREACH( std::string arg, arg_list )
+  {
+    if( arg.find( "itemtype=" ) == 0 ) // get the itemtype
+    {
+        pair_t pair = param_to_pair( arg );
+        item_type = pair.second;
+    }
+  }
+
+  return item_type;
+}
+
+inline size_t args_to_item_size( const std::string &args )
+{
+
+  return item_type_to_size_t( args_to_item_type(args) );
+}
+
 inline gr::io_signature::sptr args_to_io_signature( const std::string &args )
 {
   size_t max_nchan = 0;
   size_t dev_nchan = 0;
+
   std::vector< std::string > arg_list = args_to_vector( args );
 
   BOOST_FOREACH( std::string arg, arg_list )
@@ -154,12 +219,19 @@ inline gr::io_signature::sptr args_to_io_signature( const std::string &args )
     }
   }
 
+  std::cerr << "max_nchan: " << max_nchan
+      << " dev_nchan: " << dev_nchan
+      << std::flush
+      << std::endl; 
+
+
   // if at least one nchan was given, perform a sanity check
   if ( max_nchan && dev_nchan && max_nchan != dev_nchan )
     throw std::runtime_error("Wrong device arguments specified. Missing nchan?");
 
   const size_t nchan = std::max<size_t>(dev_nchan, 1); // assume at least one
-  return gr::io_signature::make(nchan, nchan, sizeof(gr_complex));
+  size_t item_size = args_to_item_size(args);
+  return gr::io_signature::make(nchan, nchan, item_size);
 }
 
 #endif // OSMOSDR_ARG_HELPERS_H

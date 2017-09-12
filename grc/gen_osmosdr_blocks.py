@@ -27,7 +27,7 @@ MAIN_TMPL = """\
   <throttle>1</throttle>
   <import>import osmosdr</import>
   <import>import time</import>
-  <make>osmosdr.$(sourk)( args="numchan=" + str(\$nchan) + " " + \$args )
+  <make>osmosdr.$(sourk)( args="numchan=" + str(\$nchan) + " " + "itemtype=\$type," + \$args )
 #for $m in range($max_mboards)
 ########################################################################
 \#if \$num_mboards() > $m and \$clock_source$(m)()
@@ -85,6 +85,31 @@ self.\$(id).set_bandwidth(\$bw$(n), $n)
       <name>Complex float32</name>
       <key>fc32</key>
       <opt>type:fc32</opt>
+    </option>
+    <option>
+      <name>float32</name>
+      <key>f32</key>
+      <opt>type:f32</opt>
+    </option>
+    <option>
+      <name>int8</name>
+      <key>i8</key>
+      <opt>type:s8</opt>
+    </option>
+    <option>
+      <name>Complex int8</name>
+      <key>ic8</key>
+      <opt>type:sc8</opt>
+    </option>
+    <option>
+      <name>int16</name>
+      <key>i16</key>
+      <opt>type:s16</opt>
+    </option>
+    <option>
+      <name>Complex int16</name>
+      <key>ic16</key>
+      <opt>type:sc16</opt>
     </option>
   </param>
   <param>
