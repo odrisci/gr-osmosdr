@@ -37,6 +37,7 @@
 #include <boost/thread/thread.hpp>
 
 #include <gnuradio/io_signature.h>
+#include <volk/volk_complex.h>
 
 #include "hackrf_source_c.h"
 
@@ -343,7 +344,7 @@ int hackrf_source_c::work( int noutput_items,
                         gr_vector_const_void_star &input_items,
                         gr_vector_void_star &output_items )
 {
-  gr_complex *out = (gr_complex *)output_items[0];
+  lv_8sc_t *out = (lv_8sc_t *)output_items[0];
 
   bool running = false;
 
