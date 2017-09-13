@@ -366,6 +366,7 @@ int hackrf_source_c::work( int noutput_items,
     //for (int i = 0; i < noutput_items; ++i)
       //*out++ = _lut[ *(buf + i) ];
     memcpy( out, buf, noutput_items*2*sizeof(int8_t) );
+    out += noutput_items;
 
     _buf_offset += noutput_items;
     _samp_avail -= noutput_items;
@@ -373,6 +374,7 @@ int hackrf_source_c::work( int noutput_items,
     //for (int i = 0; i < _samp_avail; ++i)
       //*out++ = _lut[ *(buf + i) ];
     memcpy( out, buf, _samp_avail*2*sizeof(int8_t) );
+    out += _samp_avail;
 
     {
       boost::mutex::scoped_lock lock( _buf_mutex );
@@ -388,6 +390,7 @@ int hackrf_source_c::work( int noutput_items,
     //for (int i = 0; i < remaining; ++i)
       //*out++ = _lut[ *(buf + i) ];
     memcpy( out, buf, remaining*2*sizeof(int8_t) );
+    out += remaining;
 
     _buf_offset = remaining;
     _samp_avail = (_buf_len / BYTES_PER_SAMPLE) - remaining;
