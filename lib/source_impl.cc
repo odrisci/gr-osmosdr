@@ -302,6 +302,7 @@ source_impl::source_impl( const std::string &args )
     if ( dict.count("rtl") ) {
       rtl_source_c_sptr src = make_rtl_source_c( arg );
       block = src; iface = src.get();
+      input_type = "ic8";
     }
 #endif
 

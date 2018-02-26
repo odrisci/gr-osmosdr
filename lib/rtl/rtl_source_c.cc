@@ -29,6 +29,7 @@
 
 #include "rtl_source_c.h"
 #include <gnuradio/io_signature.h>
+#include <volk/volk_complex.h>
 
 #include <boost/assign.hpp>
 #include <boost/format.hpp>
@@ -80,8 +81,8 @@ static const int MAX_OUT = 1;	// maximum number of output streams
  */
 rtl_source_c::rtl_source_c (const std::string &args)
   : gr::sync_block ("rtl_source_c",
-        gr::io_signature::make(MIN_IN, MAX_IN, sizeof (gr_complex)),
-        gr::io_signature::make(MIN_OUT, MAX_OUT, sizeof (gr_complex))),
+        gr::io_signature::make(MIN_IN, MAX_IN, 2*sizeof (int8_t)),
+        gr::io_signature::make(MIN_OUT, MAX_OUT, 2*sizeof (int8_t))),
     _dev(NULL),
     _buf(NULL),
     _running(false),
@@ -335,7 +336,7 @@ int rtl_source_c::work( int noutput_items,
                         gr_vector_const_void_star &input_items,
                         gr_vector_void_star &output_items )
 {
-  gr_complex *out = (gr_complex *)output_items[0];
+  lv_8sc_t *out = (lv_8sc_t *)output_items[0];
 
   {
     boost::mutex::scoped_lock lock( _buf_mutex );
@@ -351,8 +352,12 @@ int rtl_source_c::work( int noutput_items,
     const int nout = std::min(noutput_items, _samp_avail);
     const unsigned char *buf = _buf[_buf_head] + _buf_offset * 2;
 
+    //for (int i = 0; i < nout; ++i)
+      //*out++ = gr_complex(_lut[buf[i * 2]], _lut[buf[i * 2 + 1]]);
     for (int i = 0; i < nout; ++i)
-      *out++ = gr_complex(_lut[buf[i * 2]], _lut[buf[i * 2 + 1]]);
+      *out++ = lv_cmake(buf[i * 2]-128, buf[i * 2 + 1]-128);
+    //memcpy( out, buf, nout*2*sizeof(int8_t) );
+    //out += nout;
 
     noutput_items -= nout;
     _samp_avail -= nout;
@@ -371,7 +376,7 @@ int rtl_source_c::work( int noutput_items,
     }
   }
 
-  return (out - ((gr_complex *)output_items[0]));
+  return (out - ((lv_8sc_t *)output_items[0]));
 }
 
 std::vector<std::string> rtl_source_c::get_devices()
