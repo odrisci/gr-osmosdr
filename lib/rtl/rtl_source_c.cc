@@ -94,11 +94,14 @@ rtl_source_c::rtl_source_c (const std::string &args)
   int ret;
   int index;
   int bias_tee = 0;
+  int dither = 1;
   unsigned int dev_index = 0, rtl_freq = 0, tuner_freq = 0, direct_samp = 0;
   unsigned int offset_tune = 0;
   char manufact[256];
   char product[256];
   char serial[256];
+
+  std::cerr << "[gr-osmosdr] rtl_source consructed with args : " << args << std::endl;
 
   dict_t dict = params_to_dict(args);
 
@@ -154,6 +157,13 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   if (dict.count("bias"))
     bias_tee = boost::lexical_cast<bool>( dict["bias"] );
+
+  if (dict.count("dither"))
+  {
+      dither = boost::lexical_cast<bool>( dict["dither"] );
+
+      std::cerr << "[gr-osmosdr] Setting dithering to " << ( dither ? "on" : "off" ) << std::endl;
+  }
 
   _buf_num = _buf_len = _buf_head = _buf_used = _buf_offset = 0;
 
@@ -225,6 +235,10 @@ rtl_source_c::rtl_source_c (const std::string &args)
   ret = rtlsdr_set_bias_tee(_dev, bias_tee);
   if (ret < 0)
     throw std::runtime_error("Failed to set bias tee.");
+
+  ret = rtlsdr_set_dithering(_dev, dither);
+  if (ret < 0)
+    throw std::runtime_error("Failed to set dithering.");
 
   ret = rtlsdr_reset_buffer( _dev );
   if (ret < 0)
