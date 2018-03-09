@@ -176,9 +176,9 @@ rtl_source_c::rtl_source_c (const std::string &args)
 
   _samp_avail = _buf_len / BYTES_PER_SAMPLE;
 
-  // create a lookup table for gr_complex values
+  // create a lookup table for int8 values
   for (unsigned int i = 0; i < 0x100; i++)
-    _lut.push_back((i - 127.4f) / 128.0f);
+    _lut.push_back((i - 128));
 
   _dev = NULL;
   ret = rtlsdr_open( &_dev, dev_index );
@@ -352,12 +352,8 @@ int rtl_source_c::work( int noutput_items,
     const int nout = std::min(noutput_items, _samp_avail);
     const unsigned char *buf = _buf[_buf_head] + _buf_offset * 2;
 
-    //for (int i = 0; i < nout; ++i)
-      //*out++ = gr_complex(_lut[buf[i * 2]], _lut[buf[i * 2 + 1]]);
     for (int i = 0; i < nout; ++i)
-      *out++ = lv_cmake(buf[i * 2]-128, buf[i * 2 + 1]-128);
-    //memcpy( out, buf, nout*2*sizeof(int8_t) );
-    //out += nout;
+      *out++ = lv_cmake(_lut[buf[i * 2]], _lut[buf[i * 2 + 1]]);
 
     noutput_items -= nout;
     _samp_avail -= nout;

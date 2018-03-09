@@ -122,7 +122,7 @@ private:
   static void _rtlsdr_wait(rtl_source_c *obj);
   void rtlsdr_wait();
 
-  std::vector<float> _lut;
+  std::vector<int8_t> _lut;
 
   rtlsdr_dev_t *_dev;
   gr::thread::thread _thread;
